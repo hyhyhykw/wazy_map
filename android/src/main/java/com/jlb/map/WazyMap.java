@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -88,26 +87,17 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
         mWZMap.onCreate(null);
         mWZMap.setMapReadyListener(() -> channel.invokeMethod(METHOD_ON_MAP_READY, null));
         mWZMap.setOnMarkerClickListener(marker -> {
-//            String markerId = marker.getId();
-//            if(BuildConfig.DEBUG){
-//                Log.e("TAG","markerId========>"+markerId);
-//            }
-//            Marker fullMarker = mMarkers.get(markerId);
-//            if (fullMarker == null) return false;
-
-            if(BuildConfig.DEBUG){
-                Log.e("TAG","markerId222222222========>"+marker.getId());
-            }
-
-            channel.invokeMethod(METHOD_ON_MARKER_CLICK, marker.toArguments());
+            String markerId = marker.getId();
+            Marker fullMarker = mMarkers.get(markerId);
+            if (fullMarker == null) return false;
+            channel.invokeMethod(METHOD_ON_MARKER_CLICK, fullMarker.toArguments());
             return true;
         });
         mWZMap.setOnMarkerDragListener(new Map.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(Marker marker) {
                 String markerId = marker.getId();
-
-                Marker fullMarker = mWZMap.getMarker(markerId);
+                Marker fullMarker = mMarkers.get(markerId);
                 if (fullMarker == null) return;
                 channel.invokeMethod(METHOD_ON_MARKER_DRAG_START, fullMarker.toArguments());
             }
@@ -115,7 +105,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
             @Override
             public void onMarkerDrag(Marker marker) {
                 String markerId = marker.getId();
-                Marker fullMarker = mWZMap.getMarker(markerId);
+                Marker fullMarker = mMarkers.get(markerId);
                 if (fullMarker == null) return;
                 channel.invokeMethod(METHOD_ON_MARKER_DRAG, fullMarker.toArguments());
             }
@@ -123,7 +113,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
             @Override
             public void onMarkerDragEnd(Marker marker) {
                 String markerId = marker.getId();
-                Marker fullMarker = mWZMap.getMarker(markerId);
+                Marker fullMarker = mMarkers.get(markerId);
                 if (fullMarker == null) return;
                 channel.invokeMethod(METHOD_ON_MARKER_DRAG_END, fullMarker.toArguments());
             }
@@ -244,7 +234,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
 
     private static final String METHOD_GET_CURRENT_LOCATION = "getCenterLocation";
 
-
+    final HashMap<String, Marker> mMarkers = new HashMap<>();
     final HashMap<String, Circle> mCircles = new HashMap<>();
 
     final HashMap<String, Polyline> mPolylines = new HashMap<>();
@@ -290,10 +280,6 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
                 final String id = call.argument("id");
                 final String iconPath = call.argument("iconPath");
 
-                if(BuildConfig.DEBUG){
-                    android.util.Log.e("TAG","draggable=========>"+draggable);
-                }
-
                 final java.util.Map<String, Object> positionJson = call.argument("position");
                 final double latitude = (double) positionJson.get("latitude");
                 final double longitude = (double) positionJson.get("longitude");
@@ -305,6 +291,14 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
                     String assetFilePath = flutterAssets.getAssetFilePathByName(iconPath);
                     imageModel = "file:///android_asset/" + assetFilePath;
                 }
+                Marker marker = mMarkers.get(id);
+                if (marker != null) {
+                    mWZMap.updateMarker(marker, new LatLng(
+                            latitude, longitude
+                    ));
+                    return;
+                }
+
                 Glide.with(mWZMap)
                         .asBitmap()
                         .load(imageModel)
@@ -326,9 +320,10 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
                                         .position(
                                                 new LatLng(latitude, longitude)
                                         );
-                                Marker marker =
-                                        getView().addMarker(options, id);
-//                                mMarkers.put(id, marker);
+
+                                Marker marker = getView().addMarker(options, id);
+                                marker.setDraggable(draggable);
+                                mMarkers.put(id, marker);
                             }
 
                             @Override
@@ -340,28 +335,25 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
             }
             case METHOD_REMOVE_MARKER -> {
                 String id = call.arguments.toString();
-
-                Marker marker = mWZMap.getMarker(id);
+                Marker marker = mMarkers.get(id);
                 if (marker != null) {
                     marker.remove();
-//                    mMarkers.remove(id);
+                    mMarkers.remove(id);
                 }
             }
             case METHOD_REMOVE_MARKERS -> {
                 List<String> ids = call.hasArgument("ids") ? call.argument("ids") : null;
                 if (ids == null || ids.isEmpty()) {
-                    mWZMap.removeAllMarkers();
-//                    for (Marker marker : mMarkers.values()) {
-//                        marker.remove();
-//                    }
-//                    mMarkers.clear();
+                    for (Marker marker : mMarkers.values()) {
+                        marker.remove();
+                    }
+                    mMarkers.clear();
                 } else {
                     for (String id : ids) {
-                        Marker marker =  mWZMap.getMarker(id);
-//                         mMarkers.get(id);
+                        Marker marker = mMarkers.get(id);
                         if (marker != null) {
                             marker.remove();
-//                            mMarkers.remove(id);
+                            mMarkers.remove(id);
                         }
                     }
                 }
@@ -369,7 +361,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
             }
             case METHOD_GET_MARKERS -> {
                 HashMap<String, HashMap<String, Object>> markers = new HashMap<>();
-                for (java.util.Map.Entry<String, Marker> entry : mWZMap.getMarkers().entrySet()) {
+                for (java.util.Map.Entry<String, Marker> entry : mMarkers.entrySet()) {
                     markers.put(entry.getKey(), entry.getValue().toArguments());
                 }
                 result.success(markers);
@@ -407,7 +399,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
                 mCircles.put(id, circle);
 
             }
-            case METHOD_REMOVE_CIRCLE ->  {
+            case METHOD_REMOVE_CIRCLE -> {
                 String id = call.arguments.toString();
                 Circle circle = mCircles.get(id);
                 if (circle != null) {
@@ -427,7 +419,7 @@ public class WazyMap implements PlatformView, MethodChannel.MethodCallHandler {
                         Circle circle = mCircles.get(id);
                         if (circle != null) {
                             circle.remove();
-                            mCircles.remove(id);
+                            mMarkers.remove(id);
                         }
                     }
                 }

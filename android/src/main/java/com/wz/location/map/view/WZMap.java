@@ -378,21 +378,6 @@ public class WZMap extends BaseView implements Map {
 
     }
 
-    private static final HashMap<String, Marker> DEFAULT_MARKERS = new HashMap<>();
-
-    public HashMap<String, Marker> getMarkers() {
-        return mMarkManager == null ? DEFAULT_MARKERS : mMarkManager.getMarkers();
-    }
-
-    public void removeAllMarkers(){
-        mMarkManager.removeAllMarkers();
-    }
-
-    @Nullable
-    public Marker getMarker(String id) {
-        return mMarkManager == null ? null : mMarkManager.getMarker(id);
-    }
-
     private Marker curMoveMark;
     private boolean isDraging = false;
     private static final int MAX_CLICK_DISTANCE = 15;
@@ -407,7 +392,6 @@ public class WZMap extends BaseView implements Map {
             case MotionEvent.ACTION_DOWN: {
                 //获取地图上所有marker
                 curMoveMark = mMarkManager.getRectMark(rectF);
-
                 lastClickTime = System.currentTimeMillis();
                 isDraging = false;
                 pressedX = event.getX();
@@ -416,7 +400,7 @@ public class WZMap extends BaseView implements Map {
             }
             case MotionEvent.ACTION_MOVE: {
                 if (curMoveMark != null) {
-                    if (!curMoveMark.getMarkOptions().isDraggable()) {
+                    if (!curMoveMark.isDraggable()) {
                         return false;
                     }
                     long curTimeStamp = System.currentTimeMillis();
@@ -440,7 +424,7 @@ public class WZMap extends BaseView implements Map {
             // 如果保存需要移动的marker容器不为空，消费触摸事件
             case MotionEvent.ACTION_UP: {
                 if (isDraging) { // 拖动
-                    if (curMoveMark != null && !curMoveMark.getMarkOptions().isDraggable()) {
+                    if (curMoveMark != null && !curMoveMark.isDraggable()) {
                         curMoveMark = null;
                         return false;
                     }
@@ -468,6 +452,14 @@ public class WZMap extends BaseView implements Map {
                 break;
         }
         return super.onTouchEvent(event);
+    }
+
+    public void updateMarker(Marker marker, com.wz.location.map.model.LatLng newLat){
+        if(mMarkManager!=null){
+            mMarkManager.updateMark(
+                    marker,newLat
+            );
+        }
     }
 
     /**

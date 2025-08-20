@@ -20,6 +20,7 @@ public class Marker extends BaseOverlay implements Serializable {
     private LatLng latLng;
     private MarkerOptions options;
     WeakReference<IMapMarkLayer> iMapLayerWeakRef;
+    private boolean isDraggable;
 
     /**
      * 构造函数，定义地图 Marker 覆盖物 Marker 是在地图上的一个点绘制图标
@@ -70,6 +71,14 @@ public class Marker extends BaseOverlay implements Serializable {
 
     public MarkerOptions getMarkOptions() {
         return options;
+    }
+
+    public void setDraggable(boolean draggable) {
+        isDraggable = draggable;
+    }
+
+    public boolean isDraggable() {
+        return isDraggable;
     }
 
     /**

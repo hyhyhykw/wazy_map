@@ -18,7 +18,7 @@ public class MarkerOptions implements Serializable {
     private String snippet;
     private Bitmap bitmap;
     private boolean isDraggable;
-    private Map<String,Object> params;
+    private Map<String, Object> params;
 
 
     /**
@@ -27,8 +27,8 @@ public class MarkerOptions implements Serializable {
      * @param params 当前MarkerOptions对象的经纬度
      * @return MarkerOptions对象
      */
-    public MarkerOptions params(Map<String,Object> params) {
-        this.params=params;
+    public MarkerOptions params(Map<String, Object> params) {
+        this.params = params;
         return this;
     }
 
@@ -165,7 +165,7 @@ public class MarkerOptions implements Serializable {
     }
 
 
-    public  HashMap<String,Object> toArguments(){
+    public HashMap<String, Object> toArguments() {
         //options
         HashMap<String, Object> options = new HashMap<>();
 
@@ -175,6 +175,7 @@ public class MarkerOptions implements Serializable {
         options.put("title", this.getTitle());
         options.put("params", this.getParams());
         options.put("draggable", this.isDraggable());
-        return  options;
+        return options;
     }
+
 }

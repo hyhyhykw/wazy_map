@@ -19,7 +19,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.jlb.map.BuildConfig;
 import com.jlb.map.R;
@@ -63,6 +62,9 @@ public final class MarkManager implements IMapMarkLayer {
     private static final String MARKER_IMAGE_ID = "MARKER_IMAGE_ID";
     private static final String CALLOUT_LAYER_ID = "CALLOUT_LAYER_ID"; // windowInfo id
     private static final String PROPERTY_WINDOW_NAME = "PROPERTY_WINDOW_NAME";
+
+    private static final String PROPERTY_DRAGGABLE = "PROPERTY_DRAGGABLE";
+
     private static final String PROPERTY_WINDOW_CAPITAL = "property_window_capital";
     private static final String PROPERTY_SELECTED = "selected";
     private static final String TAG = "wzMap";
@@ -170,15 +172,17 @@ public final class MarkManager implements IMapMarkLayer {
         LatLng position = markerOptions.getPosition();
         Point point = Point.fromLngLat(position.lon, position.lat);
         Feature feature = Feature.fromGeometry(point);
+
         feature.addStringProperty(MARKER_IMAGE_ID, id);
         feature.addStringProperty(PROPERTY_WINDOW_NAME, title);
+
+        feature.addBooleanProperty(PROPERTY_DRAGGABLE, markerOptions.isDraggable());
+
         feature.addBooleanProperty(PROPERTY_SELECTED, false);
         featureList.add(feature);
         Bitmap markIcon = markerOptions.getBitmap();
         Marker curMarker = new Marker(this, markerOptions, id);
         curMarker.setLatLng(position);
-
-        mMarkers.put(id, curMarker);
 
         imagesMap.put(id, BitmapUtil.getScaleImg(markIcon, 150, 150));
         setInfoWindow(curMarker);
@@ -210,23 +214,6 @@ public final class MarkManager implements IMapMarkLayer {
 
     }
 
-    final HashMap<String, Marker> mMarkers = new HashMap<>();
-
-    public HashMap<String, Marker> getMarkers() {
-        return mMarkers;
-    }
-
-    @Nullable
-    public Marker getMarker(String id) {
-        return mMarkers.get(id);
-    }
-
-    public void removeAllMarkers() {
-        for (Marker value : mMarkers.values()) {
-            value.remove();
-        }
-//        mMarkers.clear();
-    }
 
     public Marker handleClickObjet(PointF screenPoint) {
         // 是否点击到了 Marker
@@ -236,14 +223,16 @@ public final class MarkManager implements IMapMarkLayer {
             Feature feature = features.get(0);
             Geometry geometry = feature.geometry();
             String markId = feature.getStringProperty(MARKER_IMAGE_ID);
+            boolean isDraggable = feature.getBooleanProperty(PROPERTY_DRAGGABLE);
 
-            if(BuildConfig.DEBUG){
-                Log.e("TAG","click marker id==========>"+markId);
+            if (BuildConfig.DEBUG) {
+                Log.e("TAG", "click marker id==========>" + markId);
             }
-            Marker marker = mMarkers.get(markId);
+//            Marker marker = mMarkers.get(markId);
 
-//            Marker marker = new Marker(this, null, markId);
-            if (marker != null && geometry instanceof Point) {
+            Marker marker = new Marker(this, null, markId);
+            marker.setDraggable(isDraggable);
+            if (geometry instanceof Point) {
                 Point point = (Point) feature.geometry();
                 marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
                 return marker;
@@ -303,8 +292,6 @@ public final class MarkManager implements IMapMarkLayer {
         }
         mStyle.removeImage(curMarkId);
         refreshSource();
-
-        mMarkers.remove(curMarkId);
     }
 
     private void setFeatureStatus(String markId, boolean isSel) {
@@ -328,10 +315,12 @@ public final class MarkManager implements IMapMarkLayer {
         Geometry geometry = feature.geometry();
         if (geometry instanceof Point) {
             String markId = feature.getStringProperty(MARKER_IMAGE_ID);
-//            Marker marker = new Marker(this, null, markId);
-            Marker marker = mMarkers.get(markId);
+            boolean isDraggable = feature.getBooleanProperty(PROPERTY_DRAGGABLE);
+            Marker marker = new Marker(this, null, markId);
+            marker.setDraggable(isDraggable);
+//            Marker marker = mMarkers.get(markId);
             Point point = (Point) feature.geometry();
-            if (marker != null && point != null) {
+            if (point != null) {
                 marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
             }
             return marker;
