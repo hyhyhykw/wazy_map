@@ -1,11 +1,11 @@
 package com.wz.location.map.util;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.layers.Property.ICON_ANCHOR_BOTTOM;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAnchor;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 
@@ -19,7 +19,9 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.jlb.map.BuildConfig;
 import com.jlb.map.R;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
@@ -160,10 +162,10 @@ public final class MarkManager implements IMapMarkLayer {
 
     public Marker addMark(MarkerOptions markerOptions) {
         String idName = UUID.randomUUID().toString();
-        return  addMark(markerOptions,idName);
+        return addMark(markerOptions, idName);
     }
 
-    public Marker addMark(MarkerOptions markerOptions,@NonNull  String id) {
+    public Marker addMark(MarkerOptions markerOptions, @NonNull String id) {
         String title = markerOptions.getTitle();
         LatLng position = markerOptions.getPosition();
         Point point = Point.fromLngLat(position.lon, position.lat);
@@ -175,6 +177,9 @@ public final class MarkManager implements IMapMarkLayer {
         Bitmap markIcon = markerOptions.getBitmap();
         Marker curMarker = new Marker(this, markerOptions, id);
         curMarker.setLatLng(position);
+
+        mMarkers.put(id, curMarker);
+
         imagesMap.put(id, BitmapUtil.getScaleImg(markIcon, 150, 150));
         setInfoWindow(curMarker);
         mStyle.addImages(imagesMap);
@@ -205,6 +210,24 @@ public final class MarkManager implements IMapMarkLayer {
 
     }
 
+    final HashMap<String, Marker> mMarkers = new HashMap<>();
+
+    public HashMap<String, Marker> getMarkers() {
+        return mMarkers;
+    }
+
+    @Nullable
+    public Marker getMarker(String id) {
+        return mMarkers.get(id);
+    }
+
+    public void removeAllMarkers() {
+        for (Marker value : mMarkers.values()) {
+            value.remove();
+        }
+//        mMarkers.clear();
+    }
+
     public Marker handleClickObjet(PointF screenPoint) {
         // 是否点击到了 Marker
         List<Feature> features = mapboxMap.queryRenderedFeatures(screenPoint, MARKER_LAYER_ID);
@@ -213,8 +236,14 @@ public final class MarkManager implements IMapMarkLayer {
             Feature feature = features.get(0);
             Geometry geometry = feature.geometry();
             String markId = feature.getStringProperty(MARKER_IMAGE_ID);
-            Marker marker = new Marker(this, null, markId);
-            if (geometry instanceof Point) {
+
+            if(BuildConfig.DEBUG){
+                Log.e("TAG","click marker id==========>"+markId);
+            }
+            Marker marker = mMarkers.get(markId);
+
+//            Marker marker = new Marker(this, null, markId);
+            if (marker != null && geometry instanceof Point) {
                 Point point = (Point) feature.geometry();
                 marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
                 return marker;
@@ -274,6 +303,8 @@ public final class MarkManager implements IMapMarkLayer {
         }
         mStyle.removeImage(curMarkId);
         refreshSource();
+
+        mMarkers.remove(curMarkId);
     }
 
     private void setFeatureStatus(String markId, boolean isSel) {
@@ -290,16 +321,19 @@ public final class MarkManager implements IMapMarkLayer {
 
     public Marker getRectMark(RectF rect) {
         List<Feature> features = mapboxMap.queryRenderedFeatures(rect, MARKER_LAYER_ID);
-        if (features == null || features.size() == 0) {
+        if (features.isEmpty()) {
             return null;
         }
         Feature feature = features.get(0);
         Geometry geometry = feature.geometry();
         if (geometry instanceof Point) {
             String markId = feature.getStringProperty(MARKER_IMAGE_ID);
-            Marker marker = new Marker(this, null, markId);
+//            Marker marker = new Marker(this, null, markId);
+            Marker marker = mMarkers.get(markId);
             Point point = (Point) feature.geometry();
-            marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
+            if (marker != null && point != null) {
+                marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
+            }
             return marker;
         }
         return null;

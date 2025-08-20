@@ -46,11 +46,11 @@ class MarkerOptions {
   int height;
 
   MarkerOptions({
-     this.snippet="",
+    this.snippet = "",
     required this.position,
-     this.title="",
+    this.title = "",
     required this.params,
-    this.isDraggable=true,
+    this.isDraggable = true,
     this.id = '',
     this.iconPath = '',
     this.isFile = false,
@@ -66,8 +66,8 @@ class MarkerOptions {
     return MarkerOptions(
       snippet: json.containsKey('snippet') ? json['snippet'] : '',
       title: json.containsKey('title') ? json['title'] : '',
-      width: json.containsKey('width') ? json['width'] : '',
-      height: json.containsKey('height') ? json['height'] : '',
+      width: json.containsKey('width') ? json['width'] : 0,
+      height: json.containsKey('height') ? json['height'] : 0,
       position: LatLng.fromJson(latJson.cast()),
       params: params.cast(),
       isDraggable: json.containsKey("draggable") ? json['draggable'] : true,
@@ -94,8 +94,8 @@ class MarkerOptions {
       "id": id,
       "iconPath": iconPath,
       "isFile": isFile,
-      "width":width,
-      "height":height,
+      "width": width,
+      "height": height,
     };
   }
 

@@ -43,6 +43,8 @@ import com.wz.location.map.model.PolylineOptions;
 import com.wz.location.map.util.LayerManager;
 import com.wz.location.map.util.MarkManager;
 
+import java.util.HashMap;
+
 public class WZMap extends BaseView implements Map {
 
     private static final String TAG = "WZMap";
@@ -376,6 +378,21 @@ public class WZMap extends BaseView implements Map {
 
     }
 
+    private static final HashMap<String, Marker> DEFAULT_MARKERS = new HashMap<>();
+
+    public HashMap<String, Marker> getMarkers() {
+        return mMarkManager == null ? DEFAULT_MARKERS : mMarkManager.getMarkers();
+    }
+
+    public void removeAllMarkers(){
+        mMarkManager.removeAllMarkers();
+    }
+
+    @Nullable
+    public Marker getMarker(String id) {
+        return mMarkManager == null ? null : mMarkManager.getMarker(id);
+    }
+
     private Marker curMoveMark;
     private boolean isDraging = false;
     private static final int MAX_CLICK_DISTANCE = 15;
@@ -390,6 +407,7 @@ public class WZMap extends BaseView implements Map {
             case MotionEvent.ACTION_DOWN: {
                 //获取地图上所有marker
                 curMoveMark = mMarkManager.getRectMark(rectF);
+
                 lastClickTime = System.currentTimeMillis();
                 isDraging = false;
                 pressedX = event.getX();
@@ -398,6 +416,9 @@ public class WZMap extends BaseView implements Map {
             }
             case MotionEvent.ACTION_MOVE: {
                 if (curMoveMark != null) {
+                    if (!curMoveMark.getMarkOptions().isDraggable()) {
+                        return false;
+                    }
                     long curTimeStamp = System.currentTimeMillis();
                     if (curTimeStamp - lastClickTime >= DRAG_TIME || DistanceUtil.distance(this.context, pressedX, pressedY, event.getX(), event.getY()) >= MAX_CLICK_DISTANCE) { // 拖动
                         if (curMoveMark != null && this.onMarkerDragListener != null) {
@@ -419,12 +440,17 @@ public class WZMap extends BaseView implements Map {
             // 如果保存需要移动的marker容器不为空，消费触摸事件
             case MotionEvent.ACTION_UP: {
                 if (isDraging) { // 拖动
+                    if (curMoveMark != null && !curMoveMark.getMarkOptions().isDraggable()) {
+                        curMoveMark = null;
+                        return false;
+                    }
                     if (curMoveMark != null && this.onMarkerDragListener != null) {
                         this.onMarkerDragListener.onMarkerDragEnd(curMoveMark);
                         return true;
                     }
                 } else {
                     PointF tapPoint = new PointF(event.getX(), event.getY());
+
                     Marker selMark = mMarkManager.handleClickObjet(tapPoint);
                     if (selMark != null && onMarkerClickListener != null) {
 
@@ -536,7 +562,7 @@ public class WZMap extends BaseView implements Map {
      * @param polylineOptions 线条选项类
      * @return 返回添加线条
      */
-    public final Polyline addPolyline(PolylineOptions polylineOptions,String id) {
+    public final Polyline addPolyline(PolylineOptions polylineOptions, String id) {
         if (polylineOptions == null) {
             return null;
         }
@@ -544,7 +570,7 @@ public class WZMap extends BaseView implements Map {
             return null;
         }
         try {
-            return this.mLayerManager.addPolyline(polylineOptions,id);
+            return this.mLayerManager.addPolyline(polylineOptions, id);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             return null;
@@ -636,7 +662,7 @@ public class WZMap extends BaseView implements Map {
      * @param polygonOptions 多边形选项类
      * @return 返回添加多边形对象
      */
-    public final Polygon addPolygon(PolygonOptions polygonOptions,String id) {
+    public final Polygon addPolygon(PolygonOptions polygonOptions, String id) {
         if (polygonOptions == null) {
             return null;
         }
@@ -644,7 +670,7 @@ public class WZMap extends BaseView implements Map {
             return null;
         }
         try {
-            return this.mLayerManager.addPolygon(polygonOptions,id);
+            return this.mLayerManager.addPolygon(polygonOptions, id);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
             return null;

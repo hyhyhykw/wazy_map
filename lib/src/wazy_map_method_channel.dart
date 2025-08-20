@@ -60,7 +60,6 @@ class MethodChannelWazyMap extends WazyMapPlatform {
           if (arguments is Map) {
             onMarkerClick(Marker.fromJson(arguments.cast()));
           }
-
           break;
         case _onMarkerDragStart:
           if (arguments is Map) {
