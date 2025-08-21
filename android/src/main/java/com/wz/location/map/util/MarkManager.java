@@ -184,7 +184,7 @@ public final class MarkManager implements IMapMarkLayer {
         Marker curMarker = new Marker(this, markerOptions, id);
         curMarker.setLatLng(position);
 
-        imagesMap.put(id, BitmapUtil.getScaleImg(markIcon, 150, 150));
+        imagesMap.put(id, BitmapUtil.getScaleImg(markIcon, 180, 180));
         setInfoWindow(curMarker);
         mStyle.addImages(imagesMap);
         refreshSource();
@@ -353,6 +353,7 @@ public final class MarkManager implements IMapMarkLayer {
                 updateFeature.addStringProperty(MARKER_IMAGE_ID, feature.getStringProperty(MARKER_IMAGE_ID));
                 updateFeature.addStringProperty(PROPERTY_WINDOW_NAME, feature.getStringProperty(PROPERTY_WINDOW_NAME));
                 updateFeature.addBooleanProperty(PROPERTY_SELECTED, feature.getBooleanProperty(PROPERTY_SELECTED));
+                updateFeature.addBooleanProperty(PROPERTY_DRAGGABLE, feature.getBooleanProperty(PROPERTY_DRAGGABLE));
                 it.remove();
                 break;
             }
