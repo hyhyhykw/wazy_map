@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'wazy_map'
-  s.version          = '1.0.4'
+  s.version          = '1.0.5'
   s.summary          = '维智地图插件'
   s.description      = <<-DESC
 维智地图插件 使用IOS MapKit

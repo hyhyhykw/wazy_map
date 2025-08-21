@@ -127,7 +127,9 @@ class WazyMapView: NSObject, FlutterPlatformView, MKMapViewDelegate, UIGestureRe
     // 点击标点
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         
-        if let marker =  view.annotation as? WazyMarker{                methodChannel.invokeMethod(onMarkerClick, arguments: marker.toJson())
+        if let marker =  view.annotation as? WazyMarker{
+            methodChannel.invokeMethod(onMarkerClick, arguments: marker.toJson())
+            mKMapView.deselectAnnotation(view.annotation, animated: false)
         }else{
             print("点击了其他位置")
         }

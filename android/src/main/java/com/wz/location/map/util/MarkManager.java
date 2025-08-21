@@ -140,6 +140,7 @@ public final class MarkManager implements IMapMarkLayer {
 
     private void setInfoWindow(Marker marker) {
         LayoutInflater inflater = LayoutInflater.from(context);
+        //noinspection deprecation
         BubbleLayout bubbleLayout = (BubbleLayout)
                 inflater.inflate(R.layout.marker_view_bubble, null);
         MarkerOptions markerOptions = marker.getMarkOptions();
@@ -232,8 +233,7 @@ public final class MarkManager implements IMapMarkLayer {
 
             Marker marker = new Marker(this, null, markId);
             marker.setDraggable(isDraggable);
-            if (geometry instanceof Point) {
-                Point point = (Point) feature.geometry();
+            if (geometry instanceof Point point) {
                 marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
                 return marker;
             }
@@ -280,9 +280,9 @@ public final class MarkManager implements IMapMarkLayer {
             Log.i(TAG, "标注 ID 为空");
             return;
         }
-        Iterator it = featureList.iterator();
+        Iterator<Feature> it = featureList.iterator();
         while (it.hasNext()) {
-            Feature feature = (Feature) it.next();
+            Feature feature = it.next();
             String pointId = feature.getStringProperty(MARKER_IMAGE_ID);
             if (curMarkId.equals(pointId)) {
                 imagesMap.remove(pointId);
@@ -313,16 +313,13 @@ public final class MarkManager implements IMapMarkLayer {
         }
         Feature feature = features.get(0);
         Geometry geometry = feature.geometry();
-        if (geometry instanceof Point) {
+        if (geometry instanceof Point point) {
             String markId = feature.getStringProperty(MARKER_IMAGE_ID);
             boolean isDraggable = feature.getBooleanProperty(PROPERTY_DRAGGABLE);
             Marker marker = new Marker(this, null, markId);
             marker.setDraggable(isDraggable);
 //            Marker marker = mMarkers.get(markId);
-            Point point = (Point) feature.geometry();
-            if (point != null) {
-                marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
-            }
+            marker.setLatLng(new LatLng(point.longitude(), point.latitude()));
             return marker;
         }
         return null;
@@ -332,22 +329,20 @@ public final class MarkManager implements IMapMarkLayer {
         if (mapboxMap != null) {
             Projection projection = mapboxMap.getProjection();
             com.mapbox.mapboxsdk.geometry.LatLng latLng = projection.fromScreenLocation(tapPoint);
-            LatLng transLatLng = new LatLng(latLng.getLatitude(), latLng.getLongitude());
-            return transLatLng;
+            return new LatLng(latLng.getLatitude(), latLng.getLongitude());
         }
         return null;
     }
 
     public void updateMark(Marker marker, LatLng newLat) {
-        Iterator it = featureList.iterator();
+        Iterator<Feature> it = featureList.iterator();
         Feature updateFeature = null;
         while (it.hasNext()) {
-            Feature feature = (Feature) it.next();
+            Feature feature = it.next();
             String markId = marker.getId();
             String pointId = feature.getStringProperty(MARKER_IMAGE_ID);
             if (markId.equals(pointId)) {
                 Point newPoint = Point.fromLngLat(newLat.lon, newLat.lat);
-                ;
                 updateFeature = Feature.fromGeometry(newPoint);
                 marker.setLatLng(newLat);
                 updateFeature.addStringProperty(MARKER_IMAGE_ID, feature.getStringProperty(MARKER_IMAGE_ID));
